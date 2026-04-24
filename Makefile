@@ -1,13 +1,25 @@
-all: theater
+CXX = g++
+CXXFLAGS = -Wall -Wextra -std=c++11
+TARGET = theater_db
+SOURCES = main.cpp theater_db.cpp
+OBJECTS = $(SOURCES:.cpp=.o)
+HEADERS = theater_db.h
 
-theater: main.o theater_db.o
- g++ -o theater main.o theater_db.o
+all: $(TARGET)
 
-main.o: main.cpp theater_db.h
- g++ -c main.cpp
+$(TARGET): $(OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJECTS)
 
-theater_db.o: theater_db.cpp theater_db.h
- g++ -c theater_db.cpp
+main.o: main.cpp $(HEADERS)
+	$(CXX) $(CXXFLAGS) -c main.cpp
+
+theater_db.o: theater_db.cpp $(HEADERS)
+	$(CXX) $(CXXFLAGS) -c theater_db.cpp
 
 clean:
- rm -f *.o theater
+	rm -f $(OBJECTS) $(TARGET) theater.txt
+
+run: $(TARGET)
+	./$(TARGET)
+
+.PHONY: all clean run
