@@ -1,170 +1,127 @@
-#include "theater_db.h"
+#include "database.h"
+#include <iostream>
+#include <limits>
 
-void printMenu() {
-    cout << "\n╔═══════════════════════════════════════════════════════════════╗\n";
-    cout << "║                  ТЕАТРАЛЬНАЯ БАЗА ДАННЫХ                     ║\n";
-    cout << "╠═══════════════════════════════════════════════════════════════╣\n";
-    cout << "║ 1. Показать все записи                                       ║\n";
-    cout << "║ 2. Добавить новую запись                                     ║\n";
-    cout << "║ 3. Найти запись по ID                                        ║\n";
-    cout << "║ 4. Поиск по ряду и месту                                     ║\n";
-    cout << "║ 5. Редактировать запись                                      ║\n";
-    cout << "║ 6. Удалить запись                                            ║\n";
-    cout << "║ 0. Выход                                                     ║\n";
-    cout << "╚═══════════════════════════════════════════════════════════════╝\n";
-    cout << "Выберите действие: ";
+void showMenu() {
+    std::cout << "\n╔════════════════════════════════════════════════╗\n";
+    std::cout << "║           УПРАВЛЕНИЕ БАЗОЙ ДАННЫХ ТЕАТРА      ║\n";
+    std::cout << "╠════════════════════════════════════════════════╣\n";
+    std::cout << "║  1. Вывести все записи                        ║\n";
+    std::cout << "║  2. Добавить новый билет                      ║\n";
+    std::cout << "║  3. Поиск по спектаклю                        ║\n";
+    std::cout << "║  4. Поиск по дате                             ║\n";
+    std::cout << "║  5. Поиск по месту (ряд+место)                ║\n";
+    std::cout << "║  6. Удалить запись по номеру покупателя       ║\n";
+    std::cout << "║  7. Редактировать запись                      ║\n";
+    std::cout << "║  8. Сохранить и выйти                         ║\n";
+    std::cout << "╚════════════════════════════════════════════════╝\n";
+    std::cout << "Выберите действие: ";
 }
 
-TheaterRecord inputNewRecord() {
-    cout << "\n=== ВВОД ДАННЫХ ===\n";
-    
-    Date date = inputDate();
-    Time time = inputTime();
-    
-    cin.ignore();
-    string showName;
-    cout << "Введите название спектакля: ";
-    getline(cin, showName);
-    
-    int row, seat;
-    while (true) {
-        cout << "Введите ряд (1-50) и место (1-100): ";
-        cin >> row >> seat;
-        if (row >= 1 && row <= 50 && seat >= 1 && seat <= 100) {
-            break;
-        }
-        cout << "Некорректный ряд или место! Попробуйте снова.\n";
-        clearInputBuffer();
-    }
-    
-    return TheaterRecord(-1, date, time, showName, row, seat);
-}
-
-void searchBySeatMenu(TheaterDatabase& db) {
-    cout << "\n=== ПОИСК ПО РЯДУ И МЕСТУ ===\n";
-    int row, seat;
-    cout << "Введите ряд: ";
-    cin >> row;
-    cout << "Введите место: ";
-    cin >> seat;
-    
-    vector<TheaterRecord> results = db.searchBySeat(row, seat);
-    
-    if (results.empty()) {
-        cout << "Записей не найдено.\n";
-    } else {
-        cout << "\nНайдено записей: " << results.size() << "\n\n";
-        for (const auto& record : results) {
-            record.print();
-            cout << endl;
-        }
-    }
-}
-
-void searchByIdMenu(TheaterDatabase& db) {
-    cout << "\n=== ПОИСК ПО ID ===\n";
-    int id;
-    cout << "Введите ID: ";
-    cin >> id;
-    
-    const TheaterRecord* record = db.findById(id);
-    if (record) {
-        record->print();
-    } else {
-        cout << "Запись с ID " << id << " не найдена.\n";
-    }
-}
-
-void editRecordMenu(TheaterDatabase& db) {
-    cout << "\n=== РЕДАКТИРОВАНИЕ ЗАПИСИ ===\n";
-    int id;
-    cout << "Введите ID записи для редактирования: ";
-    cin >> id;
-    
-    const TheaterRecord* existing = db.findById(id);
-    if (!existing) {
-        cout << "Запись с ID " << id << " не найдена.\n";
-        return;
-    }
-    
-    cout << "Текущая запись:\n";
-    existing->print();
-    
-    cout << "\nВведите новые данные:\n";
-    TheaterRecord newData = inputNewRecord();
-    
-    if (db.editRecord(id, newData)) {
-        cout << "Запись успешно обновлена!\n";
-    } else {
-        cout << "Ошибка при обновлении записи.\n";
-    }
-}
-
-void deleteRecordMenu(TheaterDatabase& db) {
-    cout << "\n=== УДАЛЕНИЕ ЗАПИСИ ===\n";
-    int id;
-    cout << "Введите ID записи для удаления: ";
-    cin >> id;
-    
-    if (db.removeRecord(id)) {
-        cout << "Запись удалена.\n";
-    } else {
-        cout << "Запись с ID " << id << " не найдена.\n";
-    }
+void clearInput() {
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
 int main() {
-    TheaterDatabase db;
+    std::string dbFilename;
+    std::cout << "Введите имя файла базы данных: ";
+    std::cin >> dbFilename;
     
-    cout << "\nДобро пожаловать в театральную базу данных!\n";
+    TheatreDatabase db(dbFilename);
     
     int choice;
+    
     do {
-        printMenu();
-        cin >> choice;
-        clearInputBuffer();
+        showMenu();
+        std::cin >> choice;
         
         switch (choice) {
             case 1:
-                db.printAll();
+                db.displayAll();
                 break;
                 
             case 2: {
-                TheaterRecord newRecord = inputNewRecord();
-                db.addRecord(newRecord);
+                std::string date, time, playName;
+                int row, seat;
+                
+                std::cout << "\n=== ДОБАВЛЕНИЕ НОВОГО БИЛЕТА ===\n";
+                std::cout << "Введите дату (ДД.ММ.ГГГГ): ";
+                std::cin >> date;
+                std::cout << "Введите время начала (ЧЧ:ММ): ";
+                std::cin >> time;
+                std::cout << "Введите название спектакля: ";
+                clearInput();
+                std::getline(std::cin, playName);
+                std::cout << "Введите ряд: ";
+                std::cin >> row;
+                std::cout << "Введите место: ";
+                std::cin >> seat;
+                
+                db.addRecord(date, time, playName, row, seat);
                 break;
             }
-                
-            case 3:
-                searchByIdMenu(db);
+            
+            case 3: {
+                std::string playName;
+                std::cout << "\n=== ПОИСК ПО НАЗВАНИЮ СПЕКТАКЛЯ ===\n";
+                std::cout << "Введите название: ";
+                clearInput();
+                std::getline(std::cin, playName);
+                db.searchByPlayName(playName);
                 break;
-                
-            case 4:
-                searchBySeatMenu(db);
+            }
+            
+            case 4: {
+                std::string date;
+                std::cout << "\n=== ПОИСК ПО ДАТЕ ===\n";
+                std::cout << "Введите дату (ДД.ММ.ГГГГ): ";
+                std::cin >> date;
+                db.searchByDate(date);
                 break;
-                
-            case 5:
-                editRecordMenu(db);
+            }
+            
+            case 5: {
+                int row, seat;
+                std::cout << "\n=== ПОИСК ПО МЕСТУ ===\n";
+                std::cout << "Введите ряд: ";
+                std::cin >> row;
+                std::cout << "Введите место: ";
+                std::cin >> seat;
+                db.searchByRowAndSeat(row, seat);
                 break;
-                
-            case 6:
-                deleteRecordMenu(db);
+            }
+            
+            case 6: {
+                int number;
+                std::cout << "\n=== УДАЛЕНИЕ ЗАПИСИ ===\n";
+                std::cout << "Введите номер покупателя: ";
+                std::cin >> number;
+                db.deleteRecord(number);
                 break;
-                
-            case 0:
-                cout << "\nВыход из программы...\n";
+            }
+            
+            case 7: {
+                int number;
+                std::cout << "\n=== РЕДАКТИРОВАНИЕ ЗАПИСИ ===\n";
+                std::cout << "Введите номер покупателя: ";
+                std::cin >> number;
+                db.editRecord(number);
+                break;
+            }
+            
+            case 8:
+                std::cout << "\nСохранение данных...\n";
+                db.saveToFile();
+                std::cout << "До свидания!\n";
                 break;
                 
             default:
-                cout << "\nНеверный выбор! Попробуйте снова.\n";
+                std::cout << "Неверный выбор! Попробуйте снова.\n";
+                break;
         }
         
-        if (choice != 0) {
-            cout << "\nНажмите Enter для продолжения...";
-            cin.get();
-        }
-        
-    } while (choice != 0);
+    } while (choice != 8);
     
     return 0;
 }
